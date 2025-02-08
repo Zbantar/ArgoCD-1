@@ -58,6 +58,7 @@ Here are the steps to install ArgoCD and retrieve the admin password:
 2. **Apply ArgoCD Manifests**:
    ```bash
    kubectl apply -n argocd -f https://raw.githubusercontent.com/argoproj/argo-cd/v2.4.7/manifests/install.yaml
+      kubectl apply -n argocd -f https://raw.githubusercontent.com/argoproj/argo-cd/stable/manifests/install.yaml
    ```
 
 3. **Patch Service Type to LoadBalancer**:
