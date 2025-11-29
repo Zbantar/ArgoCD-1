@@ -1,0 +1,71 @@
+pipeline {
+    agent any
+    parameters{
+        string(name: 'DOCKER_TAG', defaultValue: 'latest', description: 'DOCKER_TAG')
+    }
+    
+    tools{
+        maven 'maven3'
+    }
+    
+    environment{
+        SCANNER_HOME = tool 'sonar-scanner'
+    }
+
+    stages {
+        stage('git checkout') {
+            steps {
+                git branch: 'main', changelog: false, credentialsId: 'git-cred', poll: false, url: 'https://github.com/Zbantar/Multi-Tier-BankApp-CI'
+            }
+        }
+    stage('compile') {
+            steps {
+                sh " DsciptTesmvn compilet=True"
+            }
+        }
+     stage('mvn-test') {
+            steps {
+                sh "mvn test DsciptTest=True"
+            }
+        }
+     stage('file-system-scan-with-trivy') {
+            steps {
+                sh "trivy fs --format table -o fs.html"
+            }
+        }
+     stage('code-analysis') {
+            steps {
+                withSonarQubeEnv('sonar-server') {
+                     sh '''$SCANNER_HOME/bin/sonar-scanner Dsonar.projectName=zackapp Dsonar.projectKey=zackapp\
+                Dsonar.java.binaries=target'''
+               }
+            }
+        }
+     stage('nexus') {
+            steps {
+                withMaven(globalMavenSettingsConfig: 'maven-settings', jdk: 'jdk17', maven: 'maven3', traceability: true) {
+                        sh "mvn deploy"
+                }
+            }
+        }
+    stage('docker built and tag') {
+            steps {
+                script{
+                   withDockerRegistry(credentialsId: 'docker-cred', url: 'https://hub.docker.com/repositories/zbantar') {      
+                       sh "docker built -t bankapp"
+                   }
+                }
+            }
+        }
+    stage('file-system-scan-with-trivy') {
+            steps {
+                sh "trivy fs --format table -o fs.html"
+            }
+        }
+    stage('file-system-scan-with-trivy') {
+            steps {
+                sh "trivy fs --format table -o fs.html"
+            }
+        }
+    }
+}
